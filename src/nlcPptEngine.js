@@ -25,7 +25,7 @@ export async function generateNLCILPresentation(slidesData) {
   try {
     const pptx = new pptxgen();
 
-    // Widescreen 16:9 layout requirement[cite: 1]
+    // Widescreen 16:9 layout[cite: 1]
     pptx.layout = "LAYOUT_16x9";
     pptx.author = NLCIL_THEME.companyName;
 
@@ -34,9 +34,9 @@ export async function generateNLCILPresentation(slidesData) {
     // Define NLCIL Master Layout[cite: 1]
     pptx.defineSlideMaster({
       title: "NLCIL_MASTER",
-      background: { color: "F8FAFC" }, // Clean light gray/off-white corporate backdrop
+      background: { color: "F8FAFC" },
       objects: [
-        // Top Banner Accent Bar
+        // Top Primary Accent Line[cite: 1]
         {
           rect: {
             x: 0,
@@ -84,7 +84,7 @@ export async function generateNLCILPresentation(slidesData) {
             fill: { color: NLCIL_THEME.colors.primaryBlue },
           },
         },
-        // Footer Confidentiality Text
+        // Footer Tagline Text
         {
           text: {
             text: `${NLCIL_THEME.companyName} | ${NLCIL_THEME.tagline}`,
@@ -99,7 +99,7 @@ export async function generateNLCILPresentation(slidesData) {
             },
           },
         },
-        // Slide Numbering at Bottom-Right[cite: 1]
+        // Slide Numbering[cite: 1]
         {
           slideNumber: {
             x: 11.8,
@@ -116,175 +116,148 @@ export async function generateNLCILPresentation(slidesData) {
     });
 
     slidesData.forEach((slideItem, index) => {
-      const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
-
       if (index === 0) {
-        // --- Cover / Title Slide ---[cite: 1]
-        // Center Visual Hero Card
+        // --- COVER / TITLE SLIDE ---[cite: 1]
+        const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
+
+        // Center Hero Card Container
         slide.addShape(pptx.Shapes.RECTANGLE, {
           x: 1.0,
-          y: 1.8,
+          y: 1.6,
           w: 11.33,
-          h: 4.2,
+          h: 4.6,
           fill: { color: "FFFFFF" },
           line: { color: "CBD5E1", width: 1 },
         });
 
-        // Title Slide Left Blue Accent Border
+        // Left Accent Bar on Title Card
         slide.addShape(pptx.Shapes.RECTANGLE, {
           x: 1.0,
-          y: 1.8,
-          w: 0.2,
-          h: 4.2,
+          y: 1.6,
+          w: 0.25,
+          h: 4.6,
           fill: { color: NLCIL_THEME.colors.primaryBlue },
         });
 
         // Main Title[cite: 1]
         slide.addText(slideItem.title, {
-          x: 1.5,
-          y: 2.3,
-          w: 10.3,
-          h: 1.6,
+          x: 1.6,
+          y: 2.1,
+          w: 10.2,
+          h: 1.8,
           fontSize: 32, // Primary Title Size[cite: 1]
           bold: true,
           color: NLCIL_THEME.colors.primaryBlue,
           fontFace: NLCIL_THEME.fonts.title, // Arial[cite: 1]
           align: "left",
           wrap: true,
-          autoFit: true, // Auto-shrink font if text is extremely long
+          shrink: true, // Auto-shrink if text exceeds height
         });
 
         // Subtitle[cite: 1]
         if (slideItem.subtitle) {
           slide.addText(slideItem.subtitle, {
-            x: 1.5,
-            y: 4.0,
-            w: 10.3,
-            h: 1.2,
+            x: 1.6,
+            y: 4.1,
+            w: 10.2,
+            h: 1.4,
             fontSize: 24, // Subtitle Size[cite: 1]
             color: NLCIL_THEME.colors.darkBrown,
             fontFace: NLCIL_THEME.fonts.title,
             align: "left",
             wrap: true,
-            autoFit: true,
+            shrink: true,
           });
         }
       } else {
-        // --- Content Slide ---[cite: 1]
-        // Header Title[cite: 1]
-        slide.addText(slideItem.title, {
-          x: 2.2, // Offset to make room for logo
-          y: 0.25,
-          w: 10.5,
-          h: 0.7,
-          fontSize: 28, // Title size[cite: 1]
-          bold: true,
-          color: NLCIL_THEME.colors.primaryBlue,
-          fontFace: NLCIL_THEME.fonts.title, // Arial[cite: 1]
-          wrap: true,
-          valign: "middle",
-        });
-
+        // --- CONTENT SLIDE(S) ---
         const rawBullets = slideItem.bullets || [];
-        const totalBullets = Math.min(rawBullets.length, NLCIL_THEME.rules.maxBulletsPerSlide); // Cap at 8 bullets[cite: 1]
+        const MAX_PER_SLIDE = 6; // Max 6 bullets per slide for optimal spacing
 
-        if (totalBullets > 0) {
-          // Dynamic Multi-Column Flow: Split into 2 columns if > 4 bullets
-          const isTwoColumn = totalBullets > 4;
-
-          if (isTwoColumn) {
-            const col1Bullets = rawBullets.slice(0, Math.ceil(totalBullets / 2));
-            const col2Bullets = rawBullets.slice(Math.ceil(totalBullets / 2), totalBullets);
-
-            const createColumnCard = (bullets, xPos, width) => {
-              // Background Card Container
-              slide.addShape(pptx.Shapes.RECTANGLE, {
-                x: xPos,
-                y: 1.2,
-                w: width,
-                h: 5.4,
-                fill: { color: "FFFFFF" },
-                line: { color: "E2E8F0", width: 1 },
-              });
-
-              // Left Accent Line on Card
-              slide.addShape(pptx.Shapes.RECTANGLE, {
-                x: xPos,
-                y: 1.2,
-                w: 0.08,
-                h: 5.4,
-                fill: { color: NLCIL_THEME.colors.primaryBlue },
-              });
-
-              const formatted = bullets.map((b) => ({
-                text: b,
-                options: {
-                  fontSize: 18,
-                  color: NLCIL_THEME.colors.textDark,
-                  fontFace: NLCIL_THEME.fonts.body, // Calibri[cite: 1]
-                  paraSpaceBefore: 6,
-                  paraSpaceAfter: 6,
-                },
-              }));
-
-              slide.addText(formatted, {
-                x: xPos + 0.3,
-                y: 1.4,
-                w: width - 0.5,
-                h: 5.0,
-                bullet: true,
-                align: "justified", // Justified Alignment[cite: 1]
-                wrap: true,
-                autoFit: true, // Prevents vertical overflow
-                valign: "top",
-              });
-            };
-
-            createColumnCard(col1Bullets, 0.6, 5.8);
-            createColumnCard(col2Bullets, 6.8, 5.8);
-          } else {
-            // Single Card Layout for 1 to 4 Bullets
-            slide.addShape(pptx.Shapes.RECTANGLE, {
-              x: 0.6,
-              y: 1.2,
-              w: 12.13,
-              h: 5.4,
-              fill: { color: "FFFFFF" },
-              line: { color: "E2E8F0", width: 1 },
-            });
-
-            slide.addShape(pptx.Shapes.RECTANGLE, {
-              x: 0.6,
-              y: 1.2,
-              w: 0.1,
-              h: 5.4,
-              fill: { color: NLCIL_THEME.colors.primaryBlue },
-            });
-
-            const formatted = rawBullets.slice(0, totalBullets).map((b) => ({
-              text: b,
-              options: {
-                fontSize: 22,
-                color: NLCIL_THEME.colors.textDark,
-                fontFace: NLCIL_THEME.fonts.body, // Calibri[cite: 1]
-                paraSpaceBefore: 8,
-                paraSpaceAfter: 8,
-              },
-            }));
-
-            slide.addText(formatted, {
-              x: 1.0,
-              y: 1.4,
-              w: 11.4,
-              h: 5.0,
-              bullet: true,
-              align: "justified", // Justified Alignment[cite: 1]
-              wrap: true,
-              autoFit: true, // Prevents vertical overflow
-              valign: "top",
-            });
+        // Chunk bullets across multiple slides if content is long
+        const chunkedBullets = [];
+        if (rawBullets.length === 0) {
+          chunkedBullets.push([]);
+        } else {
+          for (let i = 0; i < rawBullets.length; i += MAX_PER_SLIDE) {
+            chunkedBullets.push(rawBullets.slice(i, i + MAX_PER_SLIDE));
           }
         }
+
+        chunkedBullets.forEach((bulletGroup, pageIdx) => {
+          const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
+
+          // Title Header with Part designation if split across slides[cite: 1]
+          const pageTitle =
+            chunkedBullets.length > 1
+              ? `${slideItem.title} (${pageIdx + 1}/${chunkedBullets.length})`
+              : slideItem.title;
+
+          slide.addText(pageTitle, {
+            x: 2.2,
+            y: 0.25,
+            w: 10.5,
+            h: 0.7,
+            fontSize: 28, // Title Size[cite: 1]
+            bold: true,
+            color: NLCIL_THEME.colors.primaryBlue,
+            fontFace: NLCIL_THEME.fonts.title, // Arial[cite: 1]
+            wrap: true,
+            valign: "middle",
+          });
+
+          // Render "In-and-Out" Dynamic Cards
+          const cardCount = bulletGroup.length;
+          if (cardCount > 0) {
+            const startY = 1.2;
+            const availableHeight = 5.4;
+            const gap = 0.15;
+            const cardHeight = (availableHeight - gap * (cardCount - 1)) / cardCount;
+
+            bulletGroup.forEach((bulletText, bIdx) => {
+              const currentY = startY + bIdx * (cardHeight + gap);
+              const isHighlight = bIdx % 2 === 0; // Alternating "In-and-Out" styling
+
+              // Outer Container Card
+              slide.addShape(pptx.Shapes.RECTANGLE, {
+                x: 0.8,
+                y: currentY,
+                w: 11.73,
+                h: cardHeight,
+                fill: { color: isHighlight ? "FFFFFF" : "F1F5F9" },
+                line: { color: isHighlight ? "CBD5E1" : "E2E8F0", width: 1 },
+              });
+
+              // Left Accent Ribbon
+              slide.addShape(pptx.Shapes.RECTANGLE, {
+                x: 0.8,
+                y: currentY,
+                w: 0.1,
+                h: cardHeight,
+                fill: {
+                  color: isHighlight
+                    ? NLCIL_THEME.colors.primaryBlue
+                    : NLCIL_THEME.colors.darkBrown,
+                },
+              });
+
+              // Card Text Content
+              slide.addText(bulletText, {
+                x: 1.1,
+                y: currentY + 0.05,
+                w: 11.2,
+                h: cardHeight - 0.1,
+                fontSize: Math.min(20, Math.max(14, Math.floor(160 / cardCount))),
+                color: NLCIL_THEME.colors.textDark,
+                fontFace: NLCIL_THEME.fonts.body, // Calibri[cite: 1]
+                align: "justified", // Justified Alignment[cite: 1]
+                valign: "middle",
+                wrap: true,
+                shrink: true, // Prevents text spilling out
+              });
+            });
+          }
+        });
       }
     });
 
