@@ -2,7 +2,7 @@
 import pptxgen from "pptxgenjs";
 import { NLCIL_THEME } from "./nlcBrandTheme";
 
-// Helper function to fetch and convert public/logo.png to Base64
+// Helper function to convert public/logo.png to Base64 for fail-safe embedding
 async function getLogoBase64() {
   try {
     const logoPath = `${import.meta.env.BASE_URL}logo.png`;
@@ -25,18 +25,18 @@ export async function generateNLCILPresentation(slidesData) {
   try {
     const pptx = new pptxgen();
 
-    // Widescreen 16:9 layout
+    // Standard 16:9 Widescreen View
     pptx.layout = "LAYOUT_16x9";
     pptx.author = NLCIL_THEME.companyName;
 
     const logoBase64 = await getLogoBase64();
 
-    // Define NLCIL Master Layout
+    // Define NLCIL Master Template Layout
     pptx.defineSlideMaster({
       title: "NLCIL_MASTER",
       background: { color: "F8FAFC" },
       objects: [
-        // Top Primary Accent Line
+        // Top Primary Blue Accent Line
         {
           rect: {
             x: 0,
@@ -46,7 +46,7 @@ export async function generateNLCILPresentation(slidesData) {
             fill: { color: NLCIL_THEME.colors.primaryBlue },
           },
         },
-        // Top-Left Logo
+        // Top-Left Branding Logo
         ...(logoBase64
           ? [
               {
@@ -74,7 +74,7 @@ export async function generateNLCILPresentation(slidesData) {
                 },
               },
             ]),
-        // Bottom Navy Footer Bar
+        // Bottom Navy Accent Bar
         {
           rect: {
             x: 0,
@@ -84,7 +84,7 @@ export async function generateNLCILPresentation(slidesData) {
             fill: { color: NLCIL_THEME.colors.primaryBlue },
           },
         },
-        // Footer Tagline Text
+        // Tagline Footer
         {
           text: {
             text: `${NLCIL_THEME.companyName} | ${NLCIL_THEME.tagline}`,
@@ -117,10 +117,12 @@ export async function generateNLCILPresentation(slidesData) {
 
     slidesData.forEach((slideItem, index) => {
       if (index === 0) {
-        // --- COVER / TITLE SLIDE ---
+        // ==========================================
+        // 1. EXECUTIVE TITLE / COVER SLIDE
+        // ==========================================
         const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
 
-        // Outer White Hero Frame
+        // Outer Hero Container Card
         slide.addShape("rect", {
           x: 0.8,
           y: 1.5,
@@ -134,18 +136,18 @@ export async function generateNLCILPresentation(slidesData) {
         slide.addShape("rect", {
           x: 0.8,
           y: 1.5,
-          w: 0.2,
+          w: 0.25,
           h: 4.8,
           fill: { color: NLCIL_THEME.colors.primaryBlue },
         });
 
-        // Title Box - Strictly Bounded with Custom Margins
+        // Main Title
         slide.addText(slideItem.title, {
-          x: 1.3,
+          x: 1.4,
           y: 1.8,
-          w: 10.8,
+          w: 10.6,
           h: 2.0,
-          fontSize: 32, // Primary Title Size
+          fontSize: 32, // Primary Title Font Size
           bold: true,
           color: NLCIL_THEME.colors.primaryBlue,
           fontFace: NLCIL_THEME.fonts.title, // Arial
@@ -156,14 +158,14 @@ export async function generateNLCILPresentation(slidesData) {
           margin: [5, 5, 5, 5],
         });
 
-        // Subtitle Box
+        // Subtitle
         if (slideItem.subtitle) {
           slide.addText(slideItem.subtitle, {
-            x: 1.3,
-            y: 3.9,
-            w: 10.8,
+            x: 1.4,
+            y: 4.0,
+            w: 10.6,
             h: 1.8,
-            fontSize: 22, // Subtitle Size
+            fontSize: 22, // Subtitle Font Size
             color: NLCIL_THEME.colors.darkBrown,
             fontFace: NLCIL_THEME.fonts.title,
             align: "left",
@@ -174,10 +176,30 @@ export async function generateNLCILPresentation(slidesData) {
           });
         }
       } else {
-        // --- CONTENT SLIDE(S) ---
+        // ==========================================
+        // 2. DYNAMIC CONTENT SLIDES
+        // ==========================================
         const rawBullets = slideItem.bullets || [];
-        const MAX_PER_SLIDE = 5; // Capped at 5 cards per slide for generous spacing
+        const slideTitleLower = (slideItem.title || "").toLowerCase();
 
+        // --- PATTERN DETECTORS ---
+        const isComparison =
+          slideTitleLower.includes("vs") ||
+          slideTitleLower.includes("comparison") ||
+          slideTitleLower.includes("quarterly");
+
+        const isMetricSlide = rawBullets.some((b) =>
+          /\d+([\.,]\d+)?\s*(MTPA|MW|%|Cr|Crores|Lakhs|Percent|INR)/i.test(b)
+        );
+
+        const isSequential = rawBullets.some((b) =>
+          /^(step|phase|stage|\d+[\.\)])/i.test(b.trim())
+        );
+
+        // Max bullets per slide for optimal spacing
+        const MAX_PER_SLIDE = isMetricSlide || isSequential ? 4 : 5;
+
+        // Auto-chunk text across multiple slides if content is long
         const chunkedBullets = [];
         if (rawBullets.length === 0) {
           chunkedBullets.push([]);
@@ -210,33 +232,152 @@ export async function generateNLCILPresentation(slidesData) {
             margin: 0,
           });
 
-          const cardCount = bulletGroup.length;
-          if (cardCount > 0) {
-            const startY = 1.1;
-            const availableHeight = 5.6; // Height from y=1.1 to y=6.7 (before 7.0 footer)
-            const gap = 0.12;
-            const cardHeight = (availableHeight - gap * (cardCount - 1)) / cardCount;
+          const count = bulletGroup.length;
+          if (count === 0) return;
+
+          const startY = 1.1;
+          const availableH = 5.6;
+
+          // LAYOUT A: KPI Metric Cards (Numbers + Description)
+          if (isMetricSlide) {
+            const gap = 0.15;
+            const cardH = (availableH - gap * (count - 1)) / count;
 
             bulletGroup.forEach((bulletText, bIdx) => {
-              const currentY = startY + bIdx * (cardHeight + gap);
+              const currentY = startY + bIdx * (cardH + gap);
+
+              // Split key stat from description if hyphenated
+              const parts = bulletText.split(/[-–:]/);
+              const statPart = parts[0].trim();
+              const descPart = parts.slice(1).join(" - ").trim() || statPart;
+
+              // Left Stat Box (Primary Blue Background)
+              slide.addShape("rect", {
+                x: 0.8,
+                y: currentY,
+                w: 3.2,
+                h: cardH,
+                fill: { color: NLCIL_THEME.colors.primaryBlue },
+              });
+
+              slide.addText(statPart, {
+                x: 0.8,
+                y: currentY,
+                w: 3.2,
+                h: cardH,
+                fontSize: 18,
+                bold: true,
+                color: "FFFFFF",
+                fontFace: NLCIL_THEME.fonts.title,
+                align: "center",
+                valign: "middle",
+                wrap: true,
+                shrink: true,
+                margin: [2, 5, 2, 5],
+              });
+
+              // Right Detail Container Card
+              slide.addShape("rect", {
+                x: 4.0,
+                y: currentY,
+                w: 8.53,
+                h: cardH,
+                fill: { color: "FFFFFF" },
+                line: { color: "CBD5E1", width: 1 },
+              });
+
+              slide.addText(descPart, {
+                x: 4.2,
+                y: currentY,
+                w: 8.13,
+                h: cardH,
+                fontSize: 15,
+                color: NLCIL_THEME.colors.textDark,
+                fontFace: NLCIL_THEME.fonts.body, // Calibri
+                align: "justified", // Justified Alignment
+                valign: "middle",
+                wrap: true,
+                shrink: true,
+                margin: [4, 8, 4, 8],
+              });
+            });
+          }
+          // LAYOUT B: Side-by-Side 2-Column Comparison Layout
+          else if (isComparison && count >= 2) {
+            const halfCount = Math.ceil(count / 2);
+            const col1 = bulletGroup.slice(0, halfCount);
+            const col2 = bulletGroup.slice(halfCount);
+
+            const renderColumn = (bullets, xPos) => {
+              const cardW = 5.7;
+              slide.addShape("rect", {
+                x: xPos,
+                y: startY,
+                w: cardW,
+                h: availableH,
+                fill: { color: "FFFFFF" },
+                line: { color: "CBD5E1", width: 1 },
+              });
+
+              slide.addShape("rect", {
+                x: xPos,
+                y: startY,
+                w: cardW,
+                h: 0.15,
+                fill: { color: NLCIL_THEME.colors.primaryBlue },
+              });
+
+              const formattedText = bullets.map((text) => ({
+                text: text + "\n\n",
+                options: {
+                  fontSize: 15,
+                  color: NLCIL_THEME.colors.textDark,
+                  fontFace: NLCIL_THEME.fonts.body, // Calibri
+                },
+              }));
+
+              slide.addText(formattedText, {
+                x: xPos + 0.3,
+                y: startY + 0.3,
+                w: cardW - 0.6,
+                h: availableH - 0.5,
+                bullet: true,
+                align: "justified", // Justified Alignment
+                valign: "top",
+                wrap: true,
+                shrink: true,
+                margin: [5, 5, 5, 5],
+              });
+            };
+
+            renderColumn(col1, 0.8);
+            renderColumn(col2, 6.83);
+          }
+          // LAYOUT C: Standard Executive Alternating Cards
+          else {
+            const gap = 0.12;
+            const cardH = (availableH - gap * (count - 1)) / count;
+
+            bulletGroup.forEach((bulletText, bIdx) => {
+              const currentY = startY + bIdx * (cardH + gap);
               const isHighlight = bIdx % 2 === 0;
 
-              // 1. Base Container Card
+              // Outer Card Container
               slide.addShape("rect", {
                 x: 0.8,
                 y: currentY,
                 w: 11.73,
-                h: cardHeight,
+                h: cardH,
                 fill: { color: isHighlight ? "FFFFFF" : "F8FAFC" },
                 line: { color: isHighlight ? "CBD5E1" : "E2E8F0", width: 1 },
               });
 
-              // 2. Left Accent Bar
+              // Left Vertical Ribbon
               slide.addShape("rect", {
                 x: 0.8,
                 y: currentY,
                 w: 0.12,
-                h: cardHeight,
+                h: cardH,
                 fill: {
                   color: isHighlight
                     ? NLCIL_THEME.colors.primaryBlue
@@ -244,26 +385,26 @@ export async function generateNLCILPresentation(slidesData) {
                 },
               });
 
-              // Calculate optimal font size based on text length & card height
-              const textLength = bulletText.length;
-              let calculatedFontSize = 18;
-              if (cardCount >= 5 || textLength > 120) calculatedFontSize = 14;
-              else if (cardCount >= 4 || textLength > 80) calculatedFontSize = 16;
+              // Dynamic Font Calculation
+              const len = bulletText.length;
+              let fontSize = 17;
+              if (count >= 5 || len > 120) fontSize = 14;
+              else if (count >= 4 || len > 80) fontSize = 15;
 
-              // 3. Text Overlay with Strict Zero-Padding Boundaries
+              // Inner Text Container
               slide.addText(bulletText, {
                 x: 1.1,
                 y: currentY,
                 w: 11.2,
-                h: cardHeight,
-                fontSize: calculatedFontSize,
+                h: cardH,
+                fontSize: fontSize,
                 color: NLCIL_THEME.colors.textDark,
                 fontFace: NLCIL_THEME.fonts.body, // Calibri
                 align: "justified", // Justified Alignment
-                valign: "middle",   // Perfectly vertically centered
+                valign: "middle",   // Vertically Centered
                 wrap: true,
-                shrink: true,       // Scales down font if text is unusually long
-                margin: [4, 10, 4, 10], // Strict internal padding [top, right, bottom, left]
+                shrink: true,
+                margin: [4, 10, 4, 10], // Strict internal padding
               });
             });
           }
@@ -271,6 +412,7 @@ export async function generateNLCILPresentation(slidesData) {
       }
     });
 
+    // Save and Trigger PowerPoint Download
     await pptx.writeFile({ fileName: `NLCIL_Corporate_Presentation.pptx` });
   } catch (error) {
     console.error("Export error:", error);
