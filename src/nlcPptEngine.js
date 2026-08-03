@@ -25,18 +25,18 @@ export async function generateNLCILPresentation(slidesData) {
   try {
     const pptx = new pptxgen();
 
-    // Widescreen 16:9 layout[cite: 1]
+    // Widescreen 16:9 layout
     pptx.layout = "LAYOUT_16x9";
     pptx.author = NLCIL_THEME.companyName;
 
     const logoBase64 = await getLogoBase64();
 
-    // Define NLCIL Master Layout[cite: 1]
+    // Define NLCIL Master Layout
     pptx.defineSlideMaster({
       title: "NLCIL_MASTER",
       background: { color: "F8FAFC" },
       objects: [
-        // Top Primary Accent Line[cite: 1]
+        // Top Primary Accent Line
         {
           rect: {
             x: 0,
@@ -46,13 +46,13 @@ export async function generateNLCILPresentation(slidesData) {
             fill: { color: NLCIL_THEME.colors.primaryBlue },
           },
         },
-        // Top-Left Logo[cite: 1]
+        // Top-Left Logo
         ...(logoBase64
           ? [
               {
                 image: {
                   x: 0.6,
-                  y: 0.25,
+                  y: 0.2,
                   w: 1.4,
                   h: 0.65,
                   data: logoBase64,
@@ -65,7 +65,7 @@ export async function generateNLCILPresentation(slidesData) {
                   text: NLCIL_THEME.companyName.toUpperCase(),
                   options: {
                     x: 0.6,
-                    y: 0.3,
+                    y: 0.25,
                     fontSize: 14,
                     bold: true,
                     color: NLCIL_THEME.colors.primaryBlue,
@@ -74,7 +74,7 @@ export async function generateNLCILPresentation(slidesData) {
                 },
               },
             ]),
-        // Bottom Navy Footer Bar[cite: 1]
+        // Bottom Navy Footer Bar
         {
           rect: {
             x: 0,
@@ -99,7 +99,7 @@ export async function generateNLCILPresentation(slidesData) {
             },
           },
         },
-        // Slide Numbering[cite: 1]
+        // Slide Numbering
         {
           slideNumber: {
             x: 11.8,
@@ -117,62 +117,66 @@ export async function generateNLCILPresentation(slidesData) {
 
     slidesData.forEach((slideItem, index) => {
       if (index === 0) {
-        // --- COVER / TITLE SLIDE ---[cite: 1]
+        // --- COVER / TITLE SLIDE ---
         const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
 
-        // Center Hero Card Container (uses string "rect")
+        // Outer White Hero Frame
         slide.addShape("rect", {
-          x: 1.0,
-          y: 1.6,
-          w: 11.33,
-          h: 4.6,
+          x: 0.8,
+          y: 1.5,
+          w: 11.73,
+          h: 4.8,
           fill: { color: "FFFFFF" },
           line: { color: "CBD5E1", width: 1 },
         });
 
-        // Left Accent Bar on Title Card
+        // Left Accent Ribbon
         slide.addShape("rect", {
-          x: 1.0,
-          y: 1.6,
-          w: 0.25,
-          h: 4.6,
+          x: 0.8,
+          y: 1.5,
+          w: 0.2,
+          h: 4.8,
           fill: { color: NLCIL_THEME.colors.primaryBlue },
         });
 
-        // Main Title[cite: 1]
+        // Title Box - Strictly Bounded with Custom Margins
         slide.addText(slideItem.title, {
-          x: 1.6,
-          y: 2.1,
-          w: 10.2,
-          h: 1.8,
-          fontSize: 32, // Primary Title Size[cite: 1]
+          x: 1.3,
+          y: 1.8,
+          w: 10.8,
+          h: 2.0,
+          fontSize: 32, // Primary Title Size
           bold: true,
           color: NLCIL_THEME.colors.primaryBlue,
-          fontFace: NLCIL_THEME.fonts.title, // Arial[cite: 1]
+          fontFace: NLCIL_THEME.fonts.title, // Arial
           align: "left",
+          valign: "top",
           wrap: true,
           shrink: true,
+          margin: [5, 5, 5, 5],
         });
 
-        // Subtitle[cite: 1]
+        // Subtitle Box
         if (slideItem.subtitle) {
           slide.addText(slideItem.subtitle, {
-            x: 1.6,
-            y: 4.1,
-            w: 10.2,
-            h: 1.4,
-            fontSize: 24, // Subtitle Size[cite: 1]
+            x: 1.3,
+            y: 3.9,
+            w: 10.8,
+            h: 1.8,
+            fontSize: 22, // Subtitle Size
             color: NLCIL_THEME.colors.darkBrown,
             fontFace: NLCIL_THEME.fonts.title,
             align: "left",
+            valign: "top",
             wrap: true,
             shrink: true,
+            margin: [5, 5, 5, 5],
           });
         }
       } else {
         // --- CONTENT SLIDE(S) ---
         const rawBullets = slideItem.bullets || [];
-        const MAX_PER_SLIDE = 6;
+        const MAX_PER_SLIDE = 5; // Capped at 5 cards per slide for generous spacing
 
         const chunkedBullets = [];
         if (rawBullets.length === 0) {
@@ -186,6 +190,7 @@ export async function generateNLCILPresentation(slidesData) {
         chunkedBullets.forEach((bulletGroup, pageIdx) => {
           const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
 
+          // Slide Title Header
           const pageTitle =
             chunkedBullets.length > 1
               ? `${slideItem.title} (${pageIdx + 1}/${chunkedBullets.length})`
@@ -193,43 +198,44 @@ export async function generateNLCILPresentation(slidesData) {
 
           slide.addText(pageTitle, {
             x: 2.2,
-            y: 0.25,
+            y: 0.2,
             w: 10.5,
             h: 0.7,
-            fontSize: 28, // Title Size[cite: 1]
+            fontSize: 26, // Title Size
             bold: true,
             color: NLCIL_THEME.colors.primaryBlue,
-            fontFace: NLCIL_THEME.fonts.title, // Arial[cite: 1]
+            fontFace: NLCIL_THEME.fonts.title, // Arial
             wrap: true,
             valign: "middle",
+            margin: 0,
           });
 
           const cardCount = bulletGroup.length;
           if (cardCount > 0) {
-            const startY = 1.2;
-            const availableHeight = 5.4;
-            const gap = 0.15;
+            const startY = 1.1;
+            const availableHeight = 5.6; // Height from y=1.1 to y=6.7 (before 7.0 footer)
+            const gap = 0.12;
             const cardHeight = (availableHeight - gap * (cardCount - 1)) / cardCount;
 
             bulletGroup.forEach((bulletText, bIdx) => {
               const currentY = startY + bIdx * (cardHeight + gap);
               const isHighlight = bIdx % 2 === 0;
 
-              // Outer Container Card (uses string "rect")
+              // 1. Base Container Card
               slide.addShape("rect", {
                 x: 0.8,
                 y: currentY,
                 w: 11.73,
                 h: cardHeight,
-                fill: { color: isHighlight ? "FFFFFF" : "F1F5F9" },
+                fill: { color: isHighlight ? "FFFFFF" : "F8FAFC" },
                 line: { color: isHighlight ? "CBD5E1" : "E2E8F0", width: 1 },
               });
 
-              // Left Accent Ribbon (uses string "rect")
+              // 2. Left Accent Bar
               slide.addShape("rect", {
                 x: 0.8,
                 y: currentY,
-                w: 0.1,
+                w: 0.12,
                 h: cardHeight,
                 fill: {
                   color: isHighlight
@@ -238,19 +244,26 @@ export async function generateNLCILPresentation(slidesData) {
                 },
               });
 
-              // Card Text Content
+              // Calculate optimal font size based on text length & card height
+              const textLength = bulletText.length;
+              let calculatedFontSize = 18;
+              if (cardCount >= 5 || textLength > 120) calculatedFontSize = 14;
+              else if (cardCount >= 4 || textLength > 80) calculatedFontSize = 16;
+
+              // 3. Text Overlay with Strict Zero-Padding Boundaries
               slide.addText(bulletText, {
                 x: 1.1,
-                y: currentY + 0.05,
+                y: currentY,
                 w: 11.2,
-                h: cardHeight - 0.1,
-                fontSize: Math.min(20, Math.max(14, Math.floor(160 / cardCount))),
+                h: cardHeight,
+                fontSize: calculatedFontSize,
                 color: NLCIL_THEME.colors.textDark,
-                fontFace: NLCIL_THEME.fonts.body, // Calibri[cite: 1]
-                align: "justified", // Justified Alignment[cite: 1]
-                valign: "middle",
+                fontFace: NLCIL_THEME.fonts.body, // Calibri
+                align: "justified", // Justified Alignment
+                valign: "middle",   // Perfectly vertically centered
                 wrap: true,
-                shrink: true,
+                shrink: true,       // Scales down font if text is unusually long
+                margin: [4, 10, 4, 10], // Strict internal padding [top, right, bottom, left]
               });
             });
           }
