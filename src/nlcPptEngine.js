@@ -120,7 +120,7 @@ export async function generateNLCILPresentation(slidesData) {
         // --- COVER / TITLE SLIDE ---[cite: 1]
         const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
 
-        // Center Hero Card Container using string "rect"
+        // Center Hero Card Container (uses string "rect")
         slide.addShape("rect", {
           x: 1.0,
           y: 1.6,
@@ -215,7 +215,7 @@ export async function generateNLCILPresentation(slidesData) {
               const currentY = startY + bIdx * (cardHeight + gap);
               const isHighlight = bIdx % 2 === 0;
 
-              // Outer Container Card using string "rect"
+              // Outer Container Card (uses string "rect")
               slide.addShape("rect", {
                 x: 0.8,
                 y: currentY,
@@ -225,7 +225,7 @@ export async function generateNLCILPresentation(slidesData) {
                 line: { color: isHighlight ? "CBD5E1" : "E2E8F0", width: 1 },
               });
 
-              // Left Accent Ribbon using string "rect"
+              // Left Accent Ribbon (uses string "rect")
               slide.addShape("rect", {
                 x: 0.8,
                 y: currentY,
