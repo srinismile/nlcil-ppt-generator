@@ -120,8 +120,8 @@ export async function generateNLCILPresentation(slidesData) {
         // --- COVER / TITLE SLIDE ---[cite: 1]
         const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
 
-        // Center Hero Card Container
-        slide.addShape(pptx.Shapes.RECTANGLE, {
+        // Center Hero Card Container using string "rect"
+        slide.addShape("rect", {
           x: 1.0,
           y: 1.6,
           w: 11.33,
@@ -131,7 +131,7 @@ export async function generateNLCILPresentation(slidesData) {
         });
 
         // Left Accent Bar on Title Card
-        slide.addShape(pptx.Shapes.RECTANGLE, {
+        slide.addShape("rect", {
           x: 1.0,
           y: 1.6,
           w: 0.25,
@@ -151,7 +151,7 @@ export async function generateNLCILPresentation(slidesData) {
           fontFace: NLCIL_THEME.fonts.title, // Arial[cite: 1]
           align: "left",
           wrap: true,
-          shrink: true, // Auto-shrink if text exceeds height
+          shrink: true,
         });
 
         // Subtitle[cite: 1]
@@ -172,9 +172,8 @@ export async function generateNLCILPresentation(slidesData) {
       } else {
         // --- CONTENT SLIDE(S) ---
         const rawBullets = slideItem.bullets || [];
-        const MAX_PER_SLIDE = 6; // Max 6 bullets per slide for optimal spacing
+        const MAX_PER_SLIDE = 6;
 
-        // Chunk bullets across multiple slides if content is long
         const chunkedBullets = [];
         if (rawBullets.length === 0) {
           chunkedBullets.push([]);
@@ -187,7 +186,6 @@ export async function generateNLCILPresentation(slidesData) {
         chunkedBullets.forEach((bulletGroup, pageIdx) => {
           const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
 
-          // Title Header with Part designation if split across slides[cite: 1]
           const pageTitle =
             chunkedBullets.length > 1
               ? `${slideItem.title} (${pageIdx + 1}/${chunkedBullets.length})`
@@ -206,7 +204,6 @@ export async function generateNLCILPresentation(slidesData) {
             valign: "middle",
           });
 
-          // Render "In-and-Out" Dynamic Cards
           const cardCount = bulletGroup.length;
           if (cardCount > 0) {
             const startY = 1.2;
@@ -216,10 +213,10 @@ export async function generateNLCILPresentation(slidesData) {
 
             bulletGroup.forEach((bulletText, bIdx) => {
               const currentY = startY + bIdx * (cardHeight + gap);
-              const isHighlight = bIdx % 2 === 0; // Alternating "In-and-Out" styling
+              const isHighlight = bIdx % 2 === 0;
 
-              // Outer Container Card
-              slide.addShape(pptx.Shapes.RECTANGLE, {
+              // Outer Container Card using string "rect"
+              slide.addShape("rect", {
                 x: 0.8,
                 y: currentY,
                 w: 11.73,
@@ -228,8 +225,8 @@ export async function generateNLCILPresentation(slidesData) {
                 line: { color: isHighlight ? "CBD5E1" : "E2E8F0", width: 1 },
               });
 
-              // Left Accent Ribbon
-              slide.addShape(pptx.Shapes.RECTANGLE, {
+              // Left Accent Ribbon using string "rect"
+              slide.addShape("rect", {
                 x: 0.8,
                 y: currentY,
                 w: 0.1,
@@ -253,7 +250,7 @@ export async function generateNLCILPresentation(slidesData) {
                 align: "justified", // Justified Alignment[cite: 1]
                 valign: "middle",
                 wrap: true,
-                shrink: true, // Prevents text spilling out
+                shrink: true,
               });
             });
           }
