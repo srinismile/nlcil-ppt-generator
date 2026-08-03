@@ -1,112 +1,140 @@
+// src/nlcPptEngine.js
 import pptxgen from "pptxgenjs";
 import { NLCIL_THEME } from "./nlcBrandTheme";
 
 export function generateNLCILPresentation(slidesData) {
-  const pptx = new pptxgen();
+  try {
+    const pptx = new pptxgen();
 
-  pptx.layout = "LAYOUT_16x9";
-  pptx.author = NLCIL_THEME.companyName;
+    // Widescreen 16:9 view[cite: 1]
+    pptx.layout = "LAYOUT_16x9";
+    pptx.author = NLCIL_THEME.companyName;
 
-  pptx.defineSlideMaster({
-    title: "NLCIL_MASTER",
-    background: { color: "FFFFFF" },
-    objects: [
-      {
-        image: {
-          x: 0.5,
-          y: 0.3,
-          w: 1.2,
-          h: 0.5,
-          path: NLCIL_THEME.logoUrl,
+    // Define Master Slide without external image dependency to prevent CORS block
+    pptx.defineSlideMaster({
+      title: "NLCIL_MASTER",
+      background: { color: "FFFFFF" },
+      objects: [
+        // Top Header Accent Bar
+        {
+          rect: {
+            x: 0,
+            y: 0,
+            w: "100%",
+            h: 0.15,
+            fill: { color: NLCIL_THEME.colors.primaryBlue },
+          },
         },
-      },
-      {
-        rect: {
-          x: 0,
-          y: 7.2,
-          w: "100%",
-          h: 0.3,
-          fill: { color: NLCIL_THEME.colors.primaryBlue },
+        // Company Name Header
+        {
+          text: {
+            text: NLCIL_THEME.companyName.toUpperCase(),
+            options: {
+              x: 0.5,
+              y: 0.25,
+              fontFace: NLCIL_THEME.fonts.title,
+              fontSize: 12,
+              bold: true,
+              color: NLCIL_THEME.colors.primaryBlue,
+            },
+          },
         },
-      },
-      {
-        slideNumber: {
-          x: 12.2,
-          y: 7.25,
-          color: NLCIL_THEME.colors.textLight,
-          fontFace: NLCIL_THEME.fonts.body,
-          fontSize: 10,
+        // Bottom Navy Accent Bar
+        {
+          rect: {
+            x: 0,
+            y: 7.2,
+            w: "100%",
+            h: 0.3,
+            fill: { color: NLCIL_THEME.colors.primaryBlue },
+          },
         },
-      },
-    ],
-  });
+        // Slide Numbering[cite: 1]
+        {
+          slideNumber: {
+            x: 12.2,
+            y: 7.25,
+            color: NLCIL_THEME.colors.textLight,
+            fontFace: NLCIL_THEME.fonts.body,
+            fontSize: 10,
+          },
+        },
+      ],
+    });
 
-  slidesData.forEach((slideItem, index) => {
-    const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
+    slidesData.forEach((slideItem, index) => {
+      const slide = pptx.addSlide({ masterName: "NLCIL_MASTER" });
 
-    if (index === 0) {
-      slide.addText(slideItem.title, {
-        x: 1.0,
-        y: 2.5,
-        w: 11.3,
-        h: 1.2,
-        fontSize: 32,
-        bold: true,
-        color: NLCIL_THEME.colors.primaryBlue,
-        fontFace: NLCIL_THEME.fonts.title,
-        align: "center",
-      });
-
-      if (slideItem.subtitle) {
-        slide.addText(slideItem.subtitle, {
+      if (index === 0) {
+        // --- Title Slide ---[cite: 1]
+        slide.addText(slideItem.title, {
           x: 1.0,
-          y: 3.8,
+          y: 2.5,
           w: 11.3,
-          h: 0.8,
-          fontSize: 28,
-          color: NLCIL_THEME.colors.darkBrown,
+          h: 1.2,
+          fontSize: 32, // Title Size[cite: 1]
+          bold: true,
+          color: NLCIL_THEME.colors.primaryBlue,
           fontFace: NLCIL_THEME.fonts.title,
           align: "center",
         });
-      }
-    } else {
-      slide.addText(slideItem.title, {
-        x: 1.0,
-        y: 0.4,
-        w: 11.0,
-        h: 0.6,
-        fontSize: 32,
-        bold: true,
-        color: NLCIL_THEME.colors.primaryBlue,
-        fontFace: NLCIL_THEME.fonts.title,
-      });
 
-      if (slideItem.bullets && slideItem.bullets.length > 0) {
-        const formattedBullets = slideItem.bullets
-          .slice(0, NLCIL_THEME.rules.maxBulletsPerSlide)
-          .map((text) => ({
-            text: text,
-            options: {
-              fontSize: 24,
-              color: NLCIL_THEME.colors.textDark,
-              fontFace: NLCIL_THEME.fonts.body,
-              paraSpaceBefore: 4,
-              paraSpaceAfter: 4,
-            },
-          }));
-
-        slide.addText(formattedBullets, {
-          x: 1.0,
-          y: 1.5,
-          w: 11.3,
-          h: 5.2,
-          bullet: true,
-          align: "justify",
-          lineSpacing: 28,
+        if (slideItem.subtitle) {
+          slide.addText(slideItem.subtitle, {
+            x: 1.0,
+            y: 3.8,
+            w: 11.3,
+            h: 0.8,
+            fontSize: 28, // Subtitle Size[cite: 1]
+            color: NLCIL_THEME.colors.darkBrown,
+            fontFace: NLCIL_THEME.fonts.title,
+            align: "center",
+          });
+        }
+      } else {
+        // --- Content Slide ---[cite: 1]
+        slide.addText(slideItem.title, {
+          x: 0.8,
+          y: 0.5,
+          w: 11.0,
+          h: 0.6,
+          fontSize: 32, // Title Size[cite: 1]
+          bold: true,
+          color: NLCIL_THEME.colors.primaryBlue,
+          fontFace: NLCIL_THEME.fonts.title,
         });
-      }
-    }
-  });
 
-  pptx.writeFile({ fileName: `NLCIL_Corporate_Presentation.pptx` });
+        if (slideItem.bullets && slideItem.bullets.length > 0) {
+          const formattedBullets = slideItem.bullets
+            .slice(0, NLCIL_THEME.rules.maxBulletsPerSlide)
+            .map((text) => ({
+              text: text,
+              options: {
+                fontSize: 24, // Body Text Size[cite: 1]
+                color: NLCIL_THEME.colors.textDark,
+                fontFace: NLCIL_THEME.fonts.body,
+                paraSpaceBefore: 4, // 4 pt spacing[cite: 1]
+                paraSpaceAfter: 4,
+              },
+            }));
+
+          slide.addText(formattedBullets, {
+            x: 0.8,
+            y: 1.5,
+            w: 11.3,
+            h: 5.2,
+            bullet: true,
+            align: "justify", // Justified text[cite: 1]
+            lineSpacing: 28,  // Single spacing[cite: 1]
+          });
+        }
+      }
+    });
+
+    // Trigger file download
+    pptx.writeFile({ fileName: `NLCIL_Presentation.pptx` });
+  } catch (error) {
+    console.error("PPTX Generation Error:", error);
+    alert("Error generating PowerPoint presentation: " + error.message);
+  }
 }
