@@ -1,3 +1,4 @@
+// src/nlcBrandTheme.js
 export const NLCIL_THEME = {
   companyName: "NLC India Limited",
   tagline: "CREATING WEALTH FOR WELLBEING",
@@ -18,5 +19,6 @@ export const NLCIL_THEME = {
     maxBulletsPerSlide: 8,
     maxWordsPerBullet: 8,
   },
-  logoUrl: "https://www.nlcindia.in/assets/images/logo.png",
+  // This automatically resolves to /nlcil-ppt-generator/logo.png on GitHub Pages
+  logoUrl: `${import.meta.env.BASE_URL}logo.png`,
 };
